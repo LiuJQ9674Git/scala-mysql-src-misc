@@ -17,7 +17,8 @@
    *  to the resulting future.
    *
    * @tparam S  the type of the returned `Future`
-   * @param  s  function that transforms a successful result of the receiver into a successful result of the returned future
+   * @param  s  function that transforms a successful result of the receiver
+   *              into a successful result of the returned future
    * @param  f  function that transforms a failure of the receiver into a failure of the returned future
    * @return    a `Future` that will be completed with the transformed value
    * @group Transformations
@@ -203,7 +204,8 @@
    *
    * @tparam U    the type of the returned `Future`
    * @param pf    the `PartialFunction` to apply if this `Future` fails
-   * @return      a `Future` with the successful value of this `Future` or the outcome of the `Future` returned by the `PartialFunction`
+   * @return      a `Future` with the successful value of this `Future`
+   *                 or the outcome of the `Future` returned by the `PartialFunction`
    * @group Transformations
    */
   def recoverWith[U >: T](pf: PartialFunction[Throwable, Future[U]])(implicit executor: ExecutionContext): Future[U] =

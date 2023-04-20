@@ -226,7 +226,8 @@ trait Future[+T] extends Awaitable[T] {
    *
    * @tparam U     only used to accept any return type of the given `PartialFunction`
    * @param pf     a `PartialFunction` which will be conditionally applied to the outcome of this `Future`
-   * @return       a `Future` which will be completed with the exact same outcome as this `Future` but after the `PartialFunction` has been executed.
+   * @return       a `Future` which will be completed with the exact same outcome as this `Future`
+   *                  but after the `PartialFunction` has been executed.
    * @group Callbacks
    */
   def andThen[U](pf: PartialFunction[Try[T], U])(implicit executor: ExecutionContext): Future[T] =

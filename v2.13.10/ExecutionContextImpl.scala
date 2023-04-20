@@ -120,10 +120,14 @@ private[concurrent] object ExecutionContextImpl {
             final override def submit[T](callable: Callable[T]) = asExecutorService.submit(callable)
             final override def submit[T](runnable: Runnable, t: T) = asExecutorService.submit(runnable, t)
             final override def submit(runnable: Runnable) = asExecutorService.submit(runnable)
-            final override def invokeAll[T](callables: Collection[_ <: Callable[T]]) = asExecutorService.invokeAll(callables)
-            final override def invokeAll[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = asExecutorService.invokeAll(callables, l, timeUnit)
-            final override def invokeAny[T](callables: Collection[_ <: Callable[T]]) = asExecutorService.invokeAny(callables)
-            final override def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) = asExecutorService.invokeAny(callables, l, timeUnit)
+            final override def invokeAll[T](callables: Collection[_ <: Callable[T]]) =
+                asExecutorService.invokeAll(callables)
+            final override def invokeAll[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) =
+                asExecutorService.invokeAll(callables, l, timeUnit)
+            final override def invokeAny[T](callables: Collection[_ <: Callable[T]]) =
+                asExecutorService.invokeAny(callables)
+            final override def invokeAny[T](callables: Collection[_ <: Callable[T]], l: Long, timeUnit: TimeUnit) =
+                asExecutorService.invokeAny(callables, l, timeUnit)
           }
         }
 }

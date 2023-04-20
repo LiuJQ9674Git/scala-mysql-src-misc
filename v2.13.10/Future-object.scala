@@ -123,10 +123,12 @@ object Future {
     override final def recoverWith[U >: Nothing](pf:
         PartialFunction[Throwable, Future[U]])(implicit executor: ExecutionContext): Future[U] = this
     override final def zip[U](that: Future[U]): Future[(Nothing, U)] = this
-    override final def zipWith[U, R](that: Future[U])(f: (Nothing, U) => R)(implicit executor: ExecutionContext): Future[R] = this
+    override final def zipWith[U, R](that: Future[U])(f: (Nothing, U) => R)
+     (implicit executor: ExecutionContext): Future[R] = this
     override final def fallbackTo[U >: Nothing](that: Future[U]): Future[U] = this
     override final def mapTo[S](implicit tag: ClassTag[S]): Future[S] = this
-    override final def andThen[U](pf: PartialFunction[Try[Nothing], U])(implicit executor: ExecutionContext): Future[Nothing] = this
+    override final def andThen[U](pf: PartialFunction[Try[Nothing], U])
+     (implicit executor: ExecutionContext): Future[Nothing] = this
     override final def toString: String = "Future(<never>)"
   }
 
@@ -178,7 +180,8 @@ object Future {
   final def apply[T](body: => T)(implicit executor: ExecutionContext): Future[T] =
     unit.map(_ => body)
 
-  /** Starts an asynchronous computation and returns a `Future` instance with the result of that computation once it completes.
+  /** Starts an asynchronous computation and
+  *   returns a `Future` instance with the result of that computation once it completes.
   *
   *  The following expressions are semantically equivalent:
   *
@@ -278,10 +281,12 @@ object Future {
    * @param op       the fold operation to be applied to the zero and futures
    * @return         the `Future` holding the result of the fold
    */
-  final def foldLeft[T, R](futures: scala.collection.immutable.Iterable[Future[T]])(zero: R)(op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] =
+  final def foldLeft[T, R](futures: scala.collection.immutable.Iterable[Future[T]])
+       (zero: R)(op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] =
     foldNext(futures.iterator, zero, op)
 
-  private[this] final def foldNext[T, R](i: Iterator[Future[T]], prevValue: R, op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] =
+  private[this] final def foldNext[T, R](i: Iterator[Future[T]], prevValue: R, op: (R, T) => R)
+                             (implicit executor: ExecutionContext): Future[R] =
     if (!i.hasNext) successful(prevValue)
     else i.next().flatMap { value => foldNext(i, op(prevValue, value), op) }
 
@@ -303,8 +308,11 @@ object Future {
    * @return         the `Future` holding the result of the fold
    */
   @deprecated("use Future.foldLeft instead", "2.12.0")
-  // not removed in 2.13, to facilitate 2.11/2.12/2.13 cross-building; remove further down the line (see scala/scala#6319)
-  def fold[T, R](futures: IterableOnce[Future[T]])(zero: R)(@deprecatedName("foldFun") op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] =
+  // not removed in 2.13, to facilitate 2.11/2.12/2.13 cross-building;
+  //  remove further down the line (see scala/scala#6319)
+  def fold[T, R](futures: IterableOnce[Future[T]])
+        (zero: R)(@deprecatedName("foldFun") op: (R, T) => R)
+        (implicit executor: ExecutionContext): Future[R] =
     if (futures.isEmpty) successful(zero)
     else sequence(futures)(ArrayBuffer, executor).map(_.foldLeft(zero)(op))
 
@@ -322,8 +330,10 @@ object Future {
    * @return         the `Future` holding the result of the reduce
    */
   @deprecated("use Future.reduceLeft instead", "2.12.0")
-  // not removed in 2.13, to facilitate 2.11/2.12/2.13 cross-building; remove further down the line (see scala/scala#6319)
-  final def reduce[T, R >: T](futures: IterableOnce[Future[T]])(op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] =
+  // not removed in 2.13, to facilitate 2.11/2.12/2.13 cross-building;
+  // remove further down the line (see scala/scala#6319)
+  final def reduce[T, R >: T](futures: IterableOnce[Future[T]])(op: (R, T) => R)
+    (implicit executor: ExecutionContext): Future[R] =
     if (futures.isEmpty) failed(new NoSuchElementException("reduce attempted on empty collection"))
     else sequence(futures)(ArrayBuffer, executor).map(_ reduceLeft op)
 
@@ -340,7 +350,8 @@ object Future {
    * @param op       the reduce operation which is applied to the results of the futures
    * @return         the `Future` holding the result of the reduce
    */
-  final def reduceLeft[T, R >: T](futures: scala.collection.immutable.Iterable[Future[T]])(op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] = {
+  final def reduceLeft[T, R >: T](futures: scala.collection.immutable.Iterable[Future[T]])
+     (op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] = {
     val i = futures.iterator
     if (!i.hasNext) failed(new NoSuchElementException("reduceLeft attempted on empty collection"))
     else i.next() flatMap { v => foldNext(i, v, op) }
@@ -357,11 +368,14 @@ object Future {
    * @tparam A        the type of the value inside the Futures in the collection
    * @tparam B        the type of the value of the returned `Future`
    * @tparam M        the type of the collection of Futures
-   * @param in        the collection to be mapped over with the provided function to produce a collection of Futures that is then sequenced into a Future collection
+   * @param in        the collection to be mapped over with the provided function
+   *                      to produce a collection of Futures that is then sequenced into a Future collection
    * @param fn        the function to be mapped over the collection to produce a collection of Futures
    * @return          the `Future` of the collection of results
    */
-  final def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Future[B])(implicit bf: BuildFrom[M[A], B, M[B]], executor: ExecutionContext): Future[M[B]] =
+  final def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])
+       (fn: A => Future[B])
+       (implicit bf: BuildFrom[M[A], B, M[B]], executor: ExecutionContext): Future[M[B]] =
     in.iterator.foldLeft(successful(bf.newBuilder(in))) {
       (fr, a) => fr.zipWith(fn(a))(Future.addToBuilderFun)
     }.map(_.result())(if (executor.isInstanceOf[BatchingExecutor]) executor else parasitic)
